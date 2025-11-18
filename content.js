@@ -4,7 +4,7 @@
  */
 const debug = {
     // Control whether logs should be shown (defaults to false in production)
-    enabled: false,
+    enabled: true, // Temporarily enabled for debugging
     // Control whether debug mode is active
     isDebugMode: false,
     
@@ -120,11 +120,15 @@ const debug = {
  */
 const API_CONFIG = {
     /**
-     * API endpoint for generating comments
-     * This should be updated to your production endpoint
+     * OpenAI API Key - Loaded from config.js
+     * Get your key from: https://platform.openai.com/api-keys
      */
-    URL: 'https://n8n.srv894857.hstgr.cloud/webhook/linkedin-comment',
-    // URL: 'https://n8n.srv894857.hstgr.cloud/webhook-test/linkedin-comment',
+    OPENAI_API_KEY: (typeof CONFIG !== 'undefined' && CONFIG.OPENAI_API_KEY) ? CONFIG.OPENAI_API_KEY : 'sk-your-openai-api-key-here',
+    
+    /**
+     * OpenAI API endpoint
+     */
+    URL: 'https://api.openai.com/v1/chat/completions',
     
     /**
      * Maximum number of retries for API calls
@@ -134,11 +138,12 @@ const API_CONFIG = {
     /**
      * Default timeout for API calls in milliseconds
      */
-    TIMEOUT_MS: 10000
+    TIMEOUT_MS: 30000 // Increased to 30s for OpenAI API
 };
 
 /**
  * Tone configuration with categories for better organization
+ * Enhanced with detailed instructions for human-like responses
  */
 const TONE_CONFIG = {
     /**
@@ -146,54 +151,123 @@ const TONE_CONFIG = {
      */
     CATEGORIES: {
         'Professional': [
-            { value: 'professional', label: 'Professional 💼' },
-            { value: 'formal', label: 'Formal 🎩' },
-            { value: 'corporate', label: 'Corporate 🏢' },
-            { value: 'authoritative', label: 'Authoritative 👔' }
+            { 
+                value: 'professional', 
+                label: 'Professional 💼',
+                instruction: 'Write as a thoughtful professional who reads posts carefully. Share insights or ask relevant questions. Keep it polished but approachable.'
+            },
+            { 
+                value: 'formal', 
+                label: 'Formal 🎩',
+                instruction: 'Write with refined language and structured thinking. Share well-considered perspectives while maintaining proper business etiquette.'
+            },
+            { 
+                value: 'authoritative', 
+                label: 'Authoritative 👔',
+                instruction: 'Write with confidence and expertise. Share knowledgeable perspectives or challenge ideas constructively. Back opinions with reasoning.'
+            }
         ],
-        'Friendly & Social': [
-            { value: 'friendly', label: 'Friendly 😊' },
-            { value: 'casual', label: 'Casual 👋' },
-            { value: 'conversational', label: 'Conversational 💬' },
-            { value: 'warm', label: 'Warm 🤗' }
+        'Friendly': [
+            { 
+                value: 'friendly', 
+                label: 'Friendly 😊',
+                instruction: 'Write like talking to a colleague you genuinely like. Warm, approachable, and authentic. Share personal reactions naturally.'
+            },
+            { 
+                value: 'casual', 
+                label: 'Casual 👋',
+                instruction: 'Write conversationally, like commenting at a coffee chat. Relaxed and genuine without being unprofessional.'
+            },
+            { 
+                value: 'conversational', 
+                label: 'Conversational 💬',
+                instruction: 'Write like continuing a real conversation. Build on points naturally, ask follow-up questions, share related thoughts.'
+            }
         ],
-        'Supportive & Positive': [
-            { value: 'supportive', label: 'Supportive 🤝' },
-            { value: 'encouraging', label: 'Encouraging 💪' },
-            { value: 'cheerful', label: 'Cheerful 🎉' },
-            { value: 'enthusiastic', label: 'Enthusiastic 🔥' },
-            { value: 'optimistic', label: 'Optimistic 🌟' }
+        'Supportive': [
+            { 
+                value: 'supportive', 
+                label: 'Supportive 🤝',
+                instruction: 'Write to encourage and validate. Share how the post resonates or offer constructive perspectives. Be genuinely helpful.'
+            },
+            { 
+                value: 'encouraging', 
+                label: 'Encouraging 💪',
+                instruction: 'Write to motivate and uplift. Acknowledge good points, build on ideas, and show enthusiasm for the direction of thinking.'
+            }
         ],
-        'Analytical & Thoughtful': [
-            { value: 'inquisitive', label: 'Inquisitive ❓' },
-            { value: 'analytical', label: 'Analytical 📊' },
-            { value: 'thoughtful', label: 'Thoughtful 🤔' },
-            { value: 'insightful', label: 'Insightful 💡' },
-            { value: 'critical', label: 'Critical 🔍' }
+        'Analytical': [
+            { 
+                value: 'inquisitive', 
+                label: 'Inquisitive ❓',
+                instruction: 'Write to explore deeper. Ask genuinely curious questions about specific points. Show real interest in understanding more.'
+            },
+            { 
+                value: 'analytical', 
+                label: 'Analytical 📊',
+                instruction: 'Write to examine ideas critically but constructively. Break down concepts, consider implications, connect patterns.'
+            },
+            { 
+                value: 'thoughtful', 
+                label: 'Thoughtful 🤔',
+                instruction: 'Write with careful consideration. Share nuanced perspectives, acknowledge complexity, think through implications.'
+            },
+            { 
+                value: 'insightful', 
+                label: 'Insightful 💡',
+                instruction: 'Write to add depth or a new angle. Connect ideas in unexpected ways or highlight overlooked aspects.'
+            },
+            { 
+                value: 'suggestive', 
+                label: 'Suggestive 💭',
+                instruction: 'Write to offer new ideas or improvements. Build on what they shared by suggesting additions, alternatives, or next steps. Be constructive and collaborative.'
+            }
         ],
-        'Creative & Engaging': [
-            { value: 'funny', label: 'Funny 😂' },
-            { value: 'witty', label: 'Witty 😏' },
-            { value: 'creative', label: 'Creative 🎨' },
-            { value: 'inspirational', label: 'Inspirational ✨' },
-            { value: 'motivational', label: 'Motivational 🚀' }
+        'Engaging': [
+            { 
+                value: 'witty', 
+                label: 'Witty 😏',
+                instruction: 'Write with clever observations or wordplay. Smart humor that shows you engaged with the content thoughtfully.'
+            },
+            { 
+                value: 'creative', 
+                label: 'Creative 🎨',
+                instruction: 'Write with imaginative angles or analogies. Present ideas in fresh, unexpected ways that spark thinking.'
+            },
+            { 
+                value: 'inspirational', 
+                label: 'Inspirational ✨',
+                instruction: 'Write to spark bigger thinking. Connect ideas to larger possibilities while staying grounded in the specific topic.'
+            }
         ],
-        'Empathetic & Understanding': [
-            { value: 'empathetic', label: 'Empathetic ❤️' },
-            { value: 'sympathetic', label: 'Sympathetic 🫂' },
-            { value: 'respectful', label: 'Respectful 🙏' }
+        'Direct': [
+            { 
+                value: 'concise', 
+                label: 'Concise ⚡',
+                instruction: 'Write briefly but meaningfully. Get straight to your point or question. Every word should add value.'
+            },
+            { 
+                value: 'straightforward', 
+                label: 'Straightforward 🎯',
+                instruction: 'Write plainly and directly. Say what you think clearly without unnecessary complexity. Be honest but kind.'
+            }
         ],
-        'Direct & Clear': [
-            { value: 'concise', label: 'Concise ⚡' },
-            { value: 'straightforward', label: 'Straightforward 🎯' },
-            { value: 'assertive', label: 'Assertive 💯' }
-        ],
-        'Specialized': [
-            { value: 'educational', label: 'Educational 📚' },
-            { value: 'diplomatic', label: 'Diplomatic 🤝' },
-            { value: 'humble', label: 'Humble 🙇' },
-            { value: 'grateful', label: 'Grateful 🙏' },
-            { value: 'curious', label: 'Curious 🧐' }
+        'Respectful': [
+            { 
+                value: 'respectful', 
+                label: 'Respectful �',
+                instruction: 'Write with deep respect for perspectives shared. Acknowledge value in ideas even if offering different viewpoints.'
+            },
+            { 
+                value: 'diplomatic', 
+                label: 'Diplomatic 🤝',
+                instruction: 'Write carefully balancing different perspectives. Navigate sensitive topics with tact while adding value.'
+            },
+            { 
+                value: 'curious', 
+                label: 'Curious 🧐',
+                instruction: 'Write with genuine wonder and desire to learn. Ask exploratory questions that deepen understanding.'
+            }
         ]
     },
     
@@ -218,54 +292,83 @@ const TONE_CONFIG = {
         const allTones = this.getAllTones();
         const tone = allTones.find(t => t.value === value);
         return tone ? tone.label : 'Professional 💼';
+    },
+    
+    /**
+     * Get tone instruction by value
+     * @param {string} value - Tone value
+     * @returns {string} Tone instruction
+     */
+    getInstruction: function(value) {
+        const allTones = this.getAllTones();
+        const tone = allTones.find(t => t.value === value);
+        return tone ? tone.instruction : 'Write as a thoughtful professional who reads posts carefully.';
+    },
+    
+    /**
+     * Get recommended AI model for a given tone (OpenAI models only)
+     * @param {string} toneValue - The tone value
+     * @returns {string} Recommended model value
+     */
+    getRecommendedModel: function(toneValue) {
+        const toneToModelMap = {
+            // Professional tones - Use GPT-4 for quality
+            'professional': 'gpt-4o-mini',
+            'formal': 'gpt-4-turbo',
+            'authoritative': 'gpt-4-turbo',
+            
+            // Friendly - Use efficient models
+            'friendly': 'gpt-4o-mini',
+            'casual': 'gpt-3.5-turbo',
+            'conversational': 'gpt-3.5-turbo',
+            
+            // Supportive - Balanced models
+            'supportive': 'gpt-4o-mini',
+            'encouraging': 'gpt-4o-mini',
+            
+            // Analytical - Premium models for reasoning
+            'inquisitive': 'gpt-4-turbo',
+            'analytical': 'gpt-4-turbo',
+            'thoughtful': 'gpt-4-turbo',
+            'insightful': 'gpt-4o',
+            'suggestive': 'gpt-4o', // Good for generating constructive suggestions
+            
+            // Engaging - Creative models
+            'witty': 'gpt-4o',
+            'creative': 'gpt-4o',
+            'inspirational': 'gpt-4o',
+            
+            // Direct - Efficient, precise models
+            'concise': 'gpt-3.5-turbo',
+            'straightforward': 'gpt-3.5-turbo',
+            
+            // Respectful - Nuanced models
+            'respectful': 'gpt-4-turbo',
+            'diplomatic': 'gpt-4-turbo',
+            'curious': 'gpt-4o-mini'
+        };
+        
+        return toneToModelMap[toneValue] || 'gpt-4o-mini';
     }
 };
 
+
 /**
- * GPT model configuration and mapping
+ * GPT model configuration - OpenAI models only
  */
 const GPT_MODELS = {
     /**
-     * Available GPT models grouped by provider
+     * Available OpenAI models
      */
     CATEGORIES: {
         'OpenAI GPT-4': [
-            { value: 'gpt-4.1', label: 'GPT-4.1 🧠', apiName: 'gpt-4.1' },
-            { value: 'gpt-4.1-mini', label: 'GPT-4.1 Mini 🌟', apiName: 'gpt-4.1-mini' },
-            { value: 'gpt-4.1-nano', label: 'GPT-4.1 Nano ⚡', apiName: 'gpt-4.1-nano' },
+            { value: 'gpt-4-turbo', label: 'GPT-4 Turbo 🔥', apiName: 'gpt-4-turbo' },
             { value: 'gpt-4o', label: 'GPT-4o 🚀', apiName: 'gpt-4o' },
             { value: 'gpt-4o-mini', label: 'GPT-4o Mini 💨', apiName: 'gpt-4o-mini' },
-            { value: 'gpt-4-turbo', label: 'GPT-4 Turbo 🔥', apiName: 'gpt-4-turbo' }
-        ],
-        'OpenAI O Series': [
-            { value: 'o1', label: 'O1 🎯', apiName: 'o1' },
-            { value: 'o1-mini', label: 'O1 Mini 🎯', apiName: 'o1-mini' },
-            { value: 'o3-mini', label: 'O3 Mini 🚀', apiName: 'o3-mini' },
-            { value: 'o4-mini', label: 'O4 Mini 🚀', apiName: 'o4-mini' }
+            { value: 'gpt-4', label: 'GPT-4 🧠', apiName: 'gpt-4' }
         ],
         'OpenAI GPT-3.5': [
-            { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo 💨', apiName: 'gpt-3.5-turbo' }
-        ],
-        'Anthropic Claude': [
-            { value: 'claude-3-opus', label: 'Claude 3 Opus 🎭', apiName: 'claude-3-opus-20240229' },
-            { value: 'claude-3-sonnet', label: 'Claude 3 Sonnet 📝', apiName: 'claude-3-sonnet-20240229' },
-            { value: 'claude-3-haiku', label: 'Claude 3 Haiku 🌸', apiName: 'claude-3-haiku-20240307' },
-            { value: 'claude-3.5-sonnet', label: 'Claude 3.5 Sonnet ✨', apiName: 'claude-3-5-sonnet-20240620' }
-        ],
-        'Google Gemini': [
-            { value: 'gemini-pro', label: 'Gemini Pro 💎', apiName: 'gemini-pro' },
-            { value: 'gemini-1.5-pro', label: 'Gemini 1.5 Pro 💎', apiName: 'gemini-1.5-pro' },
-            { value: 'gemini-1.5-flash', label: 'Gemini 1.5 Flash ⚡', apiName: 'gemini-1.5-flash' }
-        ],
-        'Meta Llama': [
-            { value: 'llama-3.1-70b', label: 'Llama 3.1 70B 🦙', apiName: 'llama-3.1-70b' },
-            { value: 'llama-3.1-8b', label: 'Llama 3.1 8B 🦙', apiName: 'llama-3.1-8b' },
-            { value: 'llama-3.2-90b', label: 'Llama 3.2 90B 🦙', apiName: 'llama-3.2-90b' }
-        ],
-        'Mistral AI': [
-            { value: 'mistral-large', label: 'Mistral Large 🌪️', apiName: 'mistral-large-latest' },
-            { value: 'mistral-medium', label: 'Mistral Medium 🌪️', apiName: 'mistral-medium-latest' },
-            { value: 'mistral-small', label: 'Mistral Small 🌪️', apiName: 'mistral-small-latest' }
+            { value: 'gpt-3.5-turbo', label: 'GPT-3.5 Turbo ⚡', apiName: 'gpt-3.5-turbo' }
         ]
     },
     
@@ -297,7 +400,7 @@ const GPT_MODELS = {
     getApiName: function(modelValue) {
         const allModels = this.getAllModels();
         const model = allModels.find(m => m.value === modelValue);
-        return model ? model.apiName : 'gpt-4.1-nano'; // Default to GPT-4 if not found
+        return model ? model.apiName : 'gpt-4o-mini'; // Default to GPT-4o Mini
     },
     
     /**
@@ -308,12 +411,12 @@ const GPT_MODELS = {
     getDisplayLabel: function(modelValue) {
         const allModels = this.getAllModels();
         const model = allModels.find(m => m.value === modelValue);
-        return model ? model.label : 'GPT-4.1 Nano ⚡'; // Default to GPT-4 if not found
+        return model ? model.label : 'GPT-4o Mini 💨'; // Default to GPT-4o Mini
     }
 };
 
 /**
- * Generates a comment by calling the API with post content, hint, tone, and model
+ * Generates a comment by calling OpenAI API directly
  * 
  * @param {string} content - The content of the post to generate a comment for
  * @param {string} hint - Optional hint to guide comment generation
@@ -323,62 +426,86 @@ const GPT_MODELS = {
  * @throws {Error} If API call fails or response is invalid
  */
 async function generateCommentAPI(content, hint, tone, model) {
-    if (!API_CONFIG.URL) {
-        throw new Error('API endpoint not configured in code.');
+    if (!API_CONFIG.OPENAI_API_KEY || API_CONFIG.OPENAI_API_KEY === 'sk-your-openai-api-key-here') {
+        throw new Error('OpenAI API key not configured. Please add your API key in content.js');
     }
     
-    // PRIVACY MODE: We skip getUserInfo() entirely
-    // The extension works perfectly without your real LinkedIn data!
+    // Get tone-specific instruction
+    const toneInstruction = TONE_CONFIG.getInstruction(tone || 'professional');
     
-    // Get post ID more reliably
-    let postId = 'unknown';
-    try {
-        // Try to find the post element in various ways
-        const postElement = document.querySelector('.feed-shared-update-v2, .occludable-update, [data-urn]') ||
-                          document.activeElement?.closest('.feed-shared-update-v2, .occludable-update, [data-urn]');
-        
-        if (postElement) {
-            // Try different ways to get the post ID
-            postId = postElement.getAttribute('data-urn') || 
-                    postElement.getAttribute('data-id') || 
-                    postElement.id || 
-                    'unknown';
-        }
-    } catch (error) {
-        debug.error('Error getting post ID', error);
-    }
-    
-    // PRIVACY MODE: Use dummy data instead of real user info
-    // The API only needs post content to generate comments
-    // Your real identity is NOT required for the extension to work
-    const anonymousId = `anon_${Math.random().toString(36).substring(2, 10)}`;
-    
-    // Create unique_id without exposing real profile
-    const uniqueId = `${anonymousId}_${postId}`;
-    
-    // Prepare the request payload with DUMMY user data
+    // Build the system prompt for natural, human-like responses
+    const systemPrompt = `You are a real LinkedIn user writing an authentic comment. You've just read a post and want to engage meaningfully.
+
+TONE & STYLE:
+${toneInstruction}
+
+LENGTH REQUIREMENT - CRITICAL:
+⚠️ MAXIMUM 2-3 SENTENCES (absolutely no more than 3 sentences)
+⚠️ Each sentence should be SHORT and TO THE POINT
+⚠️ Total comment should be under 50 words
+⚠️ Brevity is MORE important than being comprehensive
+
+CORE PRINCIPLES FOR NATURAL COMMENTS:
+1. Read the post carefully and identify ONE specific point that caught your attention
+2. Respond ONLY to that one specific point (not the whole post)
+3. Write like you're talking to a colleague over coffee - natural, not corporate
+4. Be direct and concise - every word must add value
+5. Choose ONE of these approaches:
+   - Share a brief related experience or observation (1-2 sentences max)
+   - Ask a thoughtful follow-up question
+   - Build on their idea with your perspective (keep it short)
+   - Respectfully challenge with an alternative angle (briefly)
+   - Connect to a broader trend (one sentence)
+
+ABSOLUTELY AVOID:
+❌ "Great post!" / "Thanks for sharing!" / "Love this!" / "So true!"
+❌ "I really appreciate..." / "Thank you for highlighting..."
+❌ Complimenting without substance
+❌ Generic agreement without adding value
+❌ Starting with "This is..." / "What a..." / "Such a..."
+❌ Long explanations or multiple examples
+❌ Overusing emojis (0-2 max, and only if natural)
+❌ Corporate buzzwords without context
+❌ Restating what they already said
+
+GOOD COMMENT PATTERNS (SHORT & DIRECT):
+✓ "The point about [topic] resonates. We saw [brief observation]."
+✓ "Interesting angle. Have you considered [alternative]?"
+✓ "[Specific point] connects to [trend]. Worth exploring."
+✓ "We tried [approach] with mixed results. What's worked for you?"
+✓ "Your take on [topic] makes me wonder about [question]."
+
+${hint ? `\nUSER'S ADDITIONAL GUIDANCE:\n${hint}\n` : ''}
+
+Remember: You're a human who read this post and has something genuine to say. Not a bot leaving generic praise.`;
+
+    // Prepare OpenAI API request with improved parameters
     const payload = {
-        hint: hint || "",
-        caption: content,  // Only the post content is actually needed
-        tone: tone || "professional",
-        model: GPT_MODELS.getApiName(model || "gpt-4.1-nano"),
-        unique_id: uniqueId,
-        user_info: {
-            id: 'anonymous_user',
-            email: 'privacy@protected.com',
-            name: 'Anonymous User',
-            profile_url: 'https://linkedin.com/anonymous'
-        }
+        model: GPT_MODELS.getApiName(model || 'gpt-4o-mini'),
+        messages: [
+            {
+                role: 'system',
+                content: systemPrompt
+            },
+            {
+                role: 'user',
+                content: `Post content:\n${content}\n\nWrite a natural LinkedIn comment that engages with specific points from this post.`
+            }
+        ],
+        temperature: 0.9, // Higher for more natural variation
+        max_tokens: 200, // Allow slightly longer for quality
+        presence_penalty: 0.7, // Strong penalty to avoid repetitive patterns
+        frequency_penalty: 0.6, // Discourage common LinkedIn phrases
+        top_p: 0.95 // Nucleus sampling for natural language
     };
     
-    debug.log('Sending payload to API (with privacy-protected data)', payload);
-    
-    debug.log('Sending payload to API', payload);
+    debug.log('Sending request to OpenAI API', { model: payload.model, tone });
     
     const requestOptions = {
         method: 'POST',
         headers: {
-            'Content-Type': 'application/json'
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${API_CONFIG.OPENAI_API_KEY}`
         },
         body: JSON.stringify(payload)
     };
@@ -416,28 +543,116 @@ async function generateCommentAPI(content, hint, tone, model) {
         }
         
         if (!response.ok) {
-            let errorMessage = `API error: ${response.status}`;
+            let errorMessage = `OpenAI API error: ${response.status}`;
             try {
-                const errorData = await response.json();
-                errorMessage += ` - ${JSON.stringify(errorData)}`;
+                const responseText = await response.text();
+                debug.error('API error response text:', responseText);
+                
+                // Try to parse as JSON
+                try {
+                    const errorData = JSON.parse(responseText);
+                    if (errorData.error && errorData.error.message) {
+                        errorMessage = `OpenAI API Error: ${errorData.error.message}`;
+                    } else {
+                        errorMessage += ` - ${JSON.stringify(errorData)}`;
+                    }
+                } catch (jsonError) {
+                    // Not valid JSON, use the text directly
+                    errorMessage += ` - ${responseText.substring(0, 200)}`;
+                }
             } catch (e) {
-                // If we can't parse JSON, just use status text
+                // If we can't even read the text, just use status text
                 errorMessage += ` - ${response.statusText}`;
             }
             throw new Error(errorMessage);
         }
         
-        const data = await response.json();
+        // Read response as text first to handle potential JSON parsing issues
+        const responseText = await response.text();
+        debug.log('Raw API response:', responseText.substring(0, 500));
         
-        if (!data.comment) {
-            throw new Error('API response missing comment field');
+        // Check if response is empty
+        if (!responseText || responseText.trim() === '') {
+            throw new Error('OpenAI API returned empty response');
         }
         
-        return data.comment;
+        // Try to parse JSON
+        let data;
+        try {
+            data = JSON.parse(responseText);
+        } catch (jsonError) {
+            debug.error('Failed to parse API response as JSON:', jsonError);
+            throw new Error(`Invalid JSON response from OpenAI API. Received: ${responseText.substring(0, 100)}...`);
+        }
+        
+        // Extract comment from OpenAI response format
+        if (!data.choices || !data.choices[0] || !data.choices[0].message || !data.choices[0].message.content) {
+            debug.error('Unexpected API response structure:', data);
+            throw new Error(`Unexpected response format from OpenAI API. Missing choices or message content.`);
+        }
+        
+        let comment = data.choices[0].message.content.trim();
+        
+        // Post-processing: Remove common AI artifacts
+        comment = cleanupGeneratedComment(comment);
+        
+        debug.log('Generated comment:', comment);
+        
+        return comment;
     } catch (error) {
-        debug.error('Error calling comment generation API', error);
+        debug.error('Error calling OpenAI API', error);
         throw error;
     }
+}
+
+/**
+ * Clean up generated comments to remove AI artifacts and ensure quality
+ * @param {string} comment - The raw generated comment
+ * @returns {string} Cleaned comment
+ */
+function cleanupGeneratedComment(comment) {
+    let cleaned = comment;
+    
+    // Remove quotes if the entire comment is wrapped in them
+    if ((cleaned.startsWith('"') && cleaned.endsWith('"')) || 
+        (cleaned.startsWith("'") && cleaned.endsWith("'"))) {
+        cleaned = cleaned.slice(1, -1).trim();
+    }
+    
+    // Remove common AI prefixes that sometimes slip through
+    const badPrefixes = [
+        'Here is a comment:',
+        'Here\'s a comment:',
+        'Comment:',
+        'LinkedIn Comment:',
+        'Here\'s my comment:',
+        'My comment:',
+        'Response:'
+    ];
+    
+    for (const prefix of badPrefixes) {
+        if (cleaned.toLowerCase().startsWith(prefix.toLowerCase())) {
+            cleaned = cleaned.substring(prefix.length).trim();
+            // Remove leading colon or dash if present
+            if (cleaned.startsWith(':') || cleaned.startsWith('-')) {
+                cleaned = cleaned.substring(1).trim();
+            }
+        }
+    }
+    
+    // Remove markdown formatting that AI sometimes adds
+    cleaned = cleaned.replace(/^\*\*(.*?)\*\*$/g, '$1'); // Bold
+    cleaned = cleaned.replace(/^\*(.*?)\*$/g, '$1'); // Italic
+    
+    // If comment is too short (likely just a generic phrase), flag it
+    if (cleaned.length < 15) {
+        debug.log('Warning: Generated comment is very short, might be generic');
+    }
+    
+    // Ensure proper spacing after punctuation
+    cleaned = cleaned.replace(/([.!?])([A-Z])/g, '$1 $2');
+    
+    return cleaned.trim();
 }
 
 /**
@@ -1062,6 +1277,29 @@ function createCommentUI(post, generateButton) {
         displayText.textContent = selectedOption.textContent;
         customDropdownDisplay.style.borderColor = '#e0e0e0';
         customDropdownDisplay.style.boxShadow = 'none';
+        
+        // AUTO-SELECT RECOMMENDED MODEL BASED ON TONE
+        const selectedTone = toneSelect.value;
+        const recommendedModel = TONE_CONFIG.getRecommendedModel(selectedTone);
+        
+        // Update model select to the recommended model
+        modelSelect.value = recommendedModel;
+        
+        // Update the model display text
+        const recommendedOption = modelSelect.options[modelSelect.selectedIndex];
+        if (recommendedOption) {
+            modelDisplayText.textContent = recommendedOption.textContent;
+        }
+        
+        // Visual feedback that model was auto-selected
+        modelCustomDropdownDisplay.style.borderColor = '#4CAF50';
+        modelCustomDropdownDisplay.style.boxShadow = '0 0 0 2px rgba(76, 175, 80, 0.2)';
+        
+        // Reset visual feedback after 1 second
+        setTimeout(() => {
+            modelCustomDropdownDisplay.style.borderColor = '#e0e0e0';
+            modelCustomDropdownDisplay.style.boxShadow = 'none';
+        }, 1000);
     });
 
     // Handle focus/blur states for custom dropdown
@@ -1146,7 +1384,7 @@ function createCommentUI(post, generateButton) {
     // Text element inside model display
     const modelDisplayText = document.createElement('span');
     modelDisplayText.className = 'dropdown-display-text';
-    modelDisplayText.textContent = 'GPT-4.1 Nano ⚡'; // Default value
+    modelDisplayText.textContent = 'GPT-4o Mini 💨'; // Default value
     modelDisplayText.style.cssText = `
         flex: 1;
         overflow: hidden;
@@ -1169,7 +1407,7 @@ function createCommentUI(post, generateButton) {
         const option = document.createElement('option');
         option.value = model.value;
         option.textContent = model.label;
-        if (model.value === 'gpt-4.1-nano') {
+        if (model.value === 'gpt-4o-mini') {
             option.selected = true;
         }
         modelSelect.appendChild(option);
